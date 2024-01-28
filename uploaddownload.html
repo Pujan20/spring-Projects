@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Operations</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+</head>
+<body>
+
+    <input type="file" id="fileInput" accept=".csv">
+    <button type="button" id="uploadButton">Upload</button>
+    <button id="listFilesButton" type="button">List Files</button>
+    <select id="fileList"></select>
+    <button id="downloadButton" type="button">Download</button>
+
+    <div id="fileListDisplay"></div>
+
+    <script>
+        $(document).ready(function () {
+            $("#uploadButton").on("click", function () {
+                uploadFile();
+            });
+
+            $("#listFilesButton").on("click", function () {
+                listFiles();
+            });
+
+            $("#downloadButton").on("click", function () {
+                downloadFile();
+            });
+        });
+
+        function uploadFile() {
+            var fileInput = $("#fileInput")[0];
+            var file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file.');
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('file', file);
+
+            $.ajax({
+                url: 'http://localhost:8080/api/upload',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    console.log('Upload Success:', response);
+                    alert(response);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Upload Error:', xhr, status, error);
+                    alert('Unsuccessful: ' + xhr.responseText);
+                }
+            });
+        }
+
+        function listFiles() {
+            $.ajax({
+                url: 'http://localhost:8080/api/list',
+                type: 'GET',
+                success: function (fileList) {
+                    console.log('List Files Success:', fileList);
+                    updateFileList(fileList);
+                },
+                error: function (xhr, status, error) {
+                    console.error('List Files Error:', xhr, status, error);
+                    alert('Unsuccessful: ' + xhr.responseText);
+                }
+            });
+        }
+
+        function updateFileList(fileList) {
+            var fileListDropdown = $('#fileList');
+            fileListDropdown.empty();
+            $.each(fileList, function (index, fileName) {
+                fileListDropdown.append($('<option>', {
+                    value: fileName,
+                    text: fileName
+                }));
+            });
+
+            // Display the list in a separate div
+            $('#fileListDisplay').html('File List: ' + fileList.join(', '));
+        }
+
+        function downloadFile() {
+            var selectedFileName = $('#fileList').val();
+            if (selectedFileName) {
+                window.location.href = 'http://localhost:8080/api/download/' + selectedFileName;
+            } else {
+                alert('Please select a file to download.');
+            }
+        }
+    </script>
+</body>
+</html>
